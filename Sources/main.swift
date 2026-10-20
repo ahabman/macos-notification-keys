@@ -16,6 +16,7 @@ import Cocoa
 import ApplicationServices
 import Carbon.HIToolbox
 import os
+import ServiceManagement
 
 let log = Logger(subsystem: "local.notificationkeys", category: "main")
 
@@ -433,10 +434,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Navigate Notifications (⌃⌥N)", action: #selector(navigate), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Clear All Notifications (⌃⌥⇧N)", action: #selector(clearAll), keyEquivalent: "").target = self
         menu.addItem(.separator())
+        let loginItem = menu.addItem(withTitle: "Start at Login", action: #selector(toggleLoginItem(_:)), keyEquivalent: "")
+        loginItem.target = self
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Quit NotificationKeys", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         item.menu = menu
         statusItem = item
+        // Register as a login item on first launch; afterwards the menu item controls it.
+        if !UserDefaults.standard.bool(forKey: "loginItemConfigured") {
+            setLoginItem(enabled: true)
+            UserDefaults.standard.set(true, forKey: "loginItemConfigured")
+        }
+        loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         _ = AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
+    }
+
+    @objc func toggleLoginItem(_ sender: NSMenuItem) {
+        setLoginItem(enabled: SMAppService.mainApp.status != .enabled)
+        sender.state = SMAppService.mainApp.status == .enabled ? .on : .off
+    }
+
+    private func setLoginItem(enabled: Bool) {
+        do {
+            if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+        } catch {
+            log.error("login item \(enabled ? "register" : "unregister", privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+        }
+        log.notice("login item status \(SMAppService.mainApp.status.rawValue, privacy: .public)")
     }
 
     @objc func navigate() { Navigator.shared.start() }

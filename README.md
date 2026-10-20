@@ -13,6 +13,8 @@ open /Applications/NotificationKeys.app
 
 `build.sh` signs ad-hoc with the designated requirement `identifier "local.notificationkeys"` instead of the default exact-cdhash requirement, so the Accessibility grant survives rebuilds. Any binary signed with that identifier matches the grant. If a grant was made for a build with the default requirement, reset it with `tccutil reset Accessibility local.notificationkeys` and grant again.
 
+On first launch the app registers itself as a login item (`SMAppService.mainApp`). The menu bar item **Start at Login** turns that on and off; System Settings > General > Login Items shows the same setting.
+
 ## Keys
 
 Global:
