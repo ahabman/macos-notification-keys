@@ -1,5 +1,6 @@
 #!/bin/zsh
 # Builds NotificationKeys.app (menu bar agent) next to this script.
+# ./build.sh --install also replaces /Applications/NotificationKeys.app.
 set -euo pipefail
 cd "$(dirname "$0")"
 APP=NotificationKeys.app
@@ -21,5 +22,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-codesign --force --sign - "$APP"
+# Ad-hoc signatures default to a designated requirement of the exact cdhash, so
+# every rebuild loses the Accessibility grant. Pin the requirement to the bundle
+# identifier instead so the grant survives rebuilds.
+codesign --force --sign - -r='designated => identifier "local.notificationkeys"' "$APP"
 echo "Built $PWD/$APP"
+if [[ "${1:-}" == "--install" ]]; then
+  pkill -f "/Applications/$APP/Contents/MacOS/" || true
+  rm -rf "/Applications/$APP"
+  ditto "$APP" "/Applications/$APP"
+  echo "Installed /Applications/$APP"
+fi

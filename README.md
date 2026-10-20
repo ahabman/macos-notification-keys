@@ -5,11 +5,13 @@ Menu bar agent that makes macOS notifications keyboard-navigable. It reads and a
 ## Build and run
 
 ```bash
-./build.sh
-open NotificationKeys.app
+./build.sh --install
+open /Applications/NotificationKeys.app
 ```
 
-On first launch, grant Accessibility access in System Settings > Privacy & Security > Accessibility. Rebuilding changes the ad-hoc code signature, so macOS may ask again after a rebuild.
+`--install` replaces `/Applications/NotificationKeys.app`, where Spotlight finds it. On first launch, grant Accessibility access in System Settings > Privacy & Security > Accessibility.
+
+`build.sh` signs ad-hoc with the designated requirement `identifier "local.notificationkeys"` instead of the default exact-cdhash requirement, so the Accessibility grant survives rebuilds. Any binary signed with that identifier matches the grant. If a grant was made for a build with the default requirement, reset it with `tccutil reset Accessibility local.notificationkeys` and grant again.
 
 ## Keys
 
@@ -18,7 +20,7 @@ Global:
 | Key | Action |
 |-----|--------|
 | ⌃⌥N | Toggle navigation mode. Opens Notification Center when no banner is on screen. |
-| ⌃⌥⇧N | Clear all notifications |
+| ⌃⌥⇧N | Clear all notifications, close Notification Center if open |
 
 In navigation mode (selection shown as an accent-colored border):
 
@@ -28,7 +30,7 @@ In navigation mode (selection shown as an accent-colored border):
 | Return | Perform the notification's default action, leave navigation mode |
 | Space / → | Expand a stack, or "Show Details" |
 | Delete / x | Close the selected notification (or clear its stack) |
-| ⇧Delete / ⌘Delete / a | Clear all notifications |
+| ⇧Delete / ⌘Delete / a | Clear all notifications, leave navigation mode, close Notification Center |
 | Esc | Leave navigation mode, close Notification Center if NotificationKeys opened it |
 
 Other keys pass through to the frontmost app.
